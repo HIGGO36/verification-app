@@ -35,8 +35,17 @@ app.post('/verify-email', (req, res) => {
     // Proceed with DNS MX record lookup
     dns.resolveMx(domain, (err, addresses) => {
         if (err) {
-            console.error(err);
-            return res.status(500).json({ success: false, message: 'DNS lookup failed' });
+            console.error(`DNS lookup error for domain ${domain}: ${err.message}`);
+            switch (err.code) {
+                case 'ENOTFOUND':
+                    return res.status(404).json({ success: false, message: 'Domain not found' });
+                case 'ETIMEOUT':
+                    return res.status(408).json({ success: false, message: 'DNS lookup timed out' });
+                case 'ENODATA':
+                    return res.status(404).json({ success: false, message: 'No DNS data found for domain' });
+                default:
+                    return res.status(500).json({ success: false, message: 'DNS lookup failed due to server error' });
+            }
         }
 
         if (addresses && addresses.length > 0) {
@@ -44,7 +53,7 @@ app.post('/verify-email', (req, res) => {
             dnsCache.set(domain, true);
             res.json({ success: true, message: 'Valid business email domain' });
         } else {
-            res.status(400).json({ success: false, message: 'Invalid business email domain' });
+            res.status(404).json({ success: false, message: 'Invalid business email domain' });
         }
     });
 });
