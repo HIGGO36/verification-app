@@ -2,6 +2,8 @@ const express = require('express');
 const dns = require('dns');
 const cors = require('cors');
 const rateLimiting = require('./middleware/rateLimiting');
+const { sanitizeRequestBody } = require('./middleware/sanitize');
+const { validateSignUp, validateResults } = require('./middleware/validation');
 const NodeCache = require('node-cache');
 
 const app = express();
@@ -11,11 +13,17 @@ const dnsCache = new NodeCache({ stdTTL: 7200 }); // Cache for 2 hours
 app.use(express.json());
 app.use(cors());
 app.use(rateLimiting);
+app.use(sanitizeRequestBody); // Apply sanitization to all incoming request data
 
 const freeEmailProviders = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com'];
 
 app.get('/', (req, res) => {
     res.send('Welcome to the Email Verification Service');
+});
+
+app.post('/signup', validateSignUp, validateResults, (req, res) => {
+  // Your signup logic here
+  res.json({ success: true, message: 'Signup successful' });
 });
 
 app.post('/verify-email', (req, res) => {
