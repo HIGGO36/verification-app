@@ -1,7 +1,11 @@
 // middleware/secureCookies.js
 function secureCookies(req, res, next) {
     if (req.secure) {
-        res.setHeader('Set-Cookie', 'secure=1; SameSite=None; Secure');
+        // Set HttpOnly, Secure, and SameSite flags for cookies
+        res.setHeader('Set-Cookie', [
+            'secure=1; HttpOnly; Secure; SameSite=None',
+            // Add more cookies if needed
+        ]);
         next();
     } else {
         res.redirect(`https://${req.headers.host}${req.url}`);
