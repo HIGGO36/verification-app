@@ -1,3 +1,4 @@
+// index.js
 const express = require('express');
 const cors = require('cors');
 const rateLimiting = require('./middleware/rateLimiting');
@@ -5,6 +6,7 @@ const { sanitizeRequestBody } = require('./middleware/sanitize');
 const { validateSignUp, validateResults } = require('./middleware/validation');
 const { verifyEmailDomain } = require('./middleware/emailVerification');
 const helmet = require('helmet');
+const secureCookies = require('./middleware/secureCookies'); // Import secureCookies middleware
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -16,6 +18,10 @@ app.use(express.json());
 app.use(cors());
 app.use(rateLimiting);
 app.use(sanitizeRequestBody);
+
+// Set Secure flag for cookies
+app.set('trust proxy', 1); // Trust first proxy
+app.use(secureCookies); // Use secureCookies middleware
 
 app.get('/', (req, res) => {
     res.send('Welcome to the Email Verification Service');
