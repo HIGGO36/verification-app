@@ -1,9 +1,7 @@
 // middleware/emailVerification.js
-
 const dns = require('dns');
 const NodeCache = require('node-cache');
 const dnsCache = new NodeCache({ stdTTL: 7200 }); // Cache for 2 hours
-
 const freeEmailProviders = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com'];
 
 const verifyEmailDomain = (req, res, next) => {

@@ -4,7 +4,7 @@ function secureCookies(req, res, next) {
         // Set HttpOnly, Secure, and SameSite flags for cookies
         res.setHeader('Set-Cookie', [
             'secure=1; HttpOnly; Secure; SameSite=None',
-            // Add more cookies if needed
+          
         ]);
         next();
     } else {
