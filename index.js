@@ -1,55 +1,44 @@
+// Index.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const admin = require('firebase-admin');
-const userSignup = require('./utils/userSignup');
-const secureCookies = require('./middleware/secureCookies');
-
-// Decode the base64 service account string
-const serviceAccount = JSON.parse(Buffer.from(process.env.ENCODED_FIREBASE_SERVICE_ACCOUNT, 'base64').toString('ascii'));
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
-
-const rateLimiting = require('./middleware/rateLimiting');
-const { sanitizeRequestBody } = require('./middleware/sanitize');
-const { validateSignUp, validateResult } = require('./middleware/validation');
-const { verifyEmailDomain } = require('./middleware/emailVerification');
+const session = require('express-session');
 const app = express();
 const port = process.env.PORT || 3001;
+// Import middlewares
+const secureCookies = require('./middleware/secureCookies');
+const rateLimiting = require('./middleware/rateLimiting');
+const sanitizeRequestBody = require('./middleware/sanitize');
+// Make sure the path to 'userRoutes' is correct according to your project structure
+const userRoutes = require('./access/routes/userRoutes'); 
 
 app.use(helmet());
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(secureCookies);
+}
 app.use(rateLimiting);
 app.use(sanitizeRequestBody);
-app.set('trust proxy', 1); // Important for secureCookies to correctly determine if the request is secure
 
-// Conditionally use the secureCookies middleware based on the environment
-if (process.env.NODE_ENV === 'production') {
-    app.use(secureCookies); // Use secureCookies middleware only in production
-}
+// Session configuration with secret for signing the session ID cookie
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'a-very-strong-secret-here', // It's better to have a fallback secret for development
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: process.env.NODE_ENV === 'production' } // Use secure cookies in production environments
+}));
 
-app.get('/', (req, res) => {
-    res.send('Welcome to the Email Verification Service');
+app.get('/', (_, res) => res.send('Welcome to the Email Verification Service'));
+
+app.use('/api/users', userRoutes);
+
+// Global error handler
+app.use((error, req, res, next) => {
+    console.error(error);
+    res.status(500).send({ success: false, message: 'Internal Server Error', error: error.message });
 });
-
-app.post('/signup', validateSignUp, validateResult, async (req, res) => {
-    try {
-        const userId = await userSignup(req.body);
-        res.json({ success: true, message: 'Signup successful', userId });
-    } catch (error) {
-        console.error("Error during signup:", error);
-        res.status(500).json({
-            success: false,
-            message: 'Signup failed',
-            errors: error.message 
-        });
-    }
-});
-
-app.post('/verify-email', verifyEmailDomain);
 
 app.listen(port, () => console.log(`Server running on port ${port}`));

@@ -1,30 +1,23 @@
-// Assuming this utility is called after Firebase Auth has created the user
+// utils/userSignup.js
 const admin = require('firebase-admin');
 
-const userSignup = async (userData) => {
-    // Destructure to exclude password from userData if it exists
-    const { password, ...userDetails } = userData;
+// This function now explicitly requires a UID
+const userSignup = async (userData, uid) => {
+  const { userType } = userData;
+  const collectionName = `${userType.toLowerCase()}s`;
 
-    // Determine the collection name based on userType
-    let collectionName = '';
-    switch (userDetails.userType) {
-        case 'Employer':
-            collectionName = 'employers';
-            break;
-        case 'Recruiter':
-            collectionName = 'recruiters';
-            break;
-        default:
-            collectionName = 'jobseekers';
-    }
+  // Include UID in the document to create a direct link to Firebase Auth user
+  const userDetailsWithUID = { ...userData, uid };
 
-    // Add user data to Firestore (excluding the password)
-    const docRef = await admin.firestore().collection(collectionName).add({
-        ...userDetails,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+  await admin.firestore().collection(collectionName).doc(uid).set({
+    ...userDetailsWithUID,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
 
-    return docRef.id; // Return the document ID of the new user record
+  // Optional: Set custom claims if needed for user permissions
+  await admin.auth().setCustomUserClaims(uid, { userType });
+
+  return { userId: uid, userType };
 };
 
 module.exports = userSignup;
