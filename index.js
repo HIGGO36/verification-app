@@ -10,23 +10,18 @@ const port = process.env.PORT || 3001;
 const secureCookies = require('./middleware/secureCookies');
 const rateLimiting = require('./middleware/rateLimiting');
 const sanitizeRequestBody = require('./middleware/sanitize');
-
 // Import routes
 const userRoutes = require('./access/routes/userRoutes');
-
 // Global CORS Options
 const corsOptions = {
-    // origin: 'http://localhost:3000', // Adjust as needed for production or development
-        origin: 'https://young-ravine-47125-71f43e0f6395.herokuapp.com', 
+    origin: 'http://localhost:3000', // Adjust as needed for production or development
   credentials: true, 
 };
 
 // Apply Helmet for basic security
 app.use(helmet());
-
 // Apply CORS globally with options
 app.use(cors(corsOptions));
-
 // Support JSON and URL-encoded bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -48,7 +43,6 @@ app.use(sanitizeRequestBody);
 
 // Routes
 app.use('/api/users', userRoutes);
-
 // Welcome route
 app.get('/', (_, res) => res.send('Welcome to the Email Verification Service'));
 

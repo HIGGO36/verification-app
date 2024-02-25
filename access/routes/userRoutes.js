@@ -10,6 +10,7 @@ const updateUserTypeRecord = async (uid, userType) => {
     await db.collection('users').doc(uid).set({ userType }, { merge: true });
 };
 
+
 router.post('/signup', verifyBusinessEmail, async (req, res) => {
     const { email, password, userType, businessEmail, ...otherDetails } = req.body;
 
@@ -57,25 +58,87 @@ router.post('/verifyToken', async (req, res) => {
     }
 });
 
-// Protected route that checks if a user is authenticated
-router.get('/dashboard', ensureAuthenticated, (req, res) => {
-    res.json({ message: 'This is the dashboard.', userType: req.session.user.userType });
-});
+// Fetch user's profile data
+// router.get('/profile', ensureAuthenticated, async (req, res) => {
+//     const uid = req.uid; // Assume ensureAuthenticated middleware sets req.uid
+//     try {
+//         const userDoc = await db.collection('users').doc(uid).get();
+//         if (!userDoc.exists) {
+//             return res.status(404).send('User not found');
+//         }
+//         res.json(userDoc.data());
+//     } catch (error) {
+//         console.error('Fetch profile error:', error);
+//         res.status(500).send('Internal server error');
+//     }
+// });
 
-// SignOut Endpoint
-router.post('/signout', async (req, res) => {
-    if (req.session.user) {
-        req.session.destroy(err => {
-            if (err) {
-                res.status(500).json({ success: false, message: 'Error signing out' });
-            } else {
-                res.clearCookie('connect.sid', { path: '/' });
-                res.json({ success: true, message: 'Sign-out successful' });
-            }
-        });
-    } else {
-        res.status(400).json({ success: false, message: 'No active session' });
+// // Update user's profile data
+// router.put('/profile', ensureAuthenticated, async (req, res) => {
+//     const uid = req.uid; // Ensure uid is set by the ensureAuthenticated middleware
+//     const updatedData = req.body;
+//     try {
+//         await db.collection('users').doc(uid).update(updatedData);
+//         res.send('Profile updated successfully');
+//     } catch (error) {
+//         console.error('Update profile error:', error);
+//         res.status(500).send('Internal server error');
+//     }
+// });
+
+
+// Combined GET and PUT endpoint for /profile
+router.route('/profile')
+    // .get(ensureAuthenticated, async (req, res) => {
+    //     // Ensure `ensureAuthenticated` middleware correctly sets `req.uid`
+    //     try {
+    //         const userDoc = await db.collection('users').doc(req.uid).get();
+    //         if (!userDoc.exists) {
+    //             return res.status(404).json({ success: false, message: 'User not found' });
+    //         }
+    //         res.json({ success: true, userData: userDoc.data() });
+    //     } catch (error) {
+    //         console.error('Fetch profile error:', error);
+    //         res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+    //     }
+  // })
+  
+  // Inside your GET /profile route
+.get(ensureAuthenticated, async (req, res) => {
+    const uid = req.uid;
+    try {
+        const userDoc = await db.collection('users').doc(uid).get();
+        if (!userDoc.exists) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        console.log("Fetched user data:", userDoc.data()); // Debug log
+        res.json(userDoc.data());
+    } catch (error) {
+        console.error('Fetch profile error:', error);
+        res.status(500).json({ message: 'Internal server error', error: error.message });
     }
+})
+
+    .put(ensureAuthenticated, async (req, res) => {
+        const updatedData = req.body;
+        try {
+            await db.collection('users').doc(req.uid).update(updatedData);
+            res.json({ success: true, message: 'Profile updated successfully' });
+        } catch (error) {
+            console.error('Update profile error:', error);
+            res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+        }
+    });
+
+router.post('/signout', ensureAuthenticated, async (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            res.status(500).json({ success: false, message: 'Error signing out' });
+        } else {
+            res.clearCookie('connect.sid');
+            res.json({ success: true, message: 'Sign-out successful' });
+        }
+    });
 });
 
 module.exports = router;
