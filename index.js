@@ -16,8 +16,9 @@ const userRoutes = require('./access/routes/userRoutes');
 
 // Global CORS Options
 const corsOptions = {
-  origin: 'http://localhost:3000', // Adjust as needed for production or development
-  credentials: true, // This is important for sessions or cookies
+    // origin: 'http://localhost:3000', // Adjust as needed for production or development
+        origin: 'https://young-ravine-47125-71f43e0f6395.herokuapp.com', 
+  credentials: true, 
 };
 
 // Apply Helmet for basic security
