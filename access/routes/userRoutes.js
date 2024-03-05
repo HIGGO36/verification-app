@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../firebase/firebaseAdminConfig').db;
-const auth = require('../firebase/firebaseAdminConfig').auth; // Ensure correct import for auth
+const auth = require('../firebase/firebaseAdminConfig').auth;
 const verifyBusinessEmail = require('../../middleware/verifyBusinessEmail');
 const ensureAuthenticated = require('../../middleware/ensureAuthenticated');
 
@@ -32,8 +32,8 @@ router.post('/signup', verifyBusinessEmail, async (req, res) => {
 
 // Token Verification
 router.post('/verifyToken', async (req, res) => {
-  const { idToken } = req.body;
   try {
+    const { idToken } = req.body;
     const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
@@ -71,7 +71,7 @@ router.route('/profile')
     res.json(profileRef.data());
   })
   .put(ensureAuthenticated, async (req, res) => {
-    const { uid } = req; // Assuming ensureAuthenticated sets req.uid
+    const { uid } = req;
     const updatedData = req.body;
 
     const userRef = await db.collection('users').doc(uid).get();

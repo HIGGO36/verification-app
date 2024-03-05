@@ -1,3 +1,4 @@
+// index.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -43,6 +44,7 @@ app.use(sanitizeRequestBody);
 
 // Routes
 app.use('/api/users', userRoutes);
+
 // Welcome route
 app.get('/', (_, res) => res.send('Welcome to the Email Verification Service'));
 
